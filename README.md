@@ -1,1 +1,1 @@
-# eda-playbooks
+# Event Driven Ansible with OpenShift
