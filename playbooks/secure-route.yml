@@ -84,4 +84,3 @@
               termination: edge
               insecureEdgeTerminationPolicy: Redirect
             wildcardPolicy: "{{ ansible_eda.event.resource.spec.wildcardPolicy }}"
-
