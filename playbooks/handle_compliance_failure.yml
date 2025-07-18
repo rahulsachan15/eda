@@ -1,0 +1,51 @@
+---
+- name: Automate Remediation for OpenShift Compliance Failure
+  hosts: localhost # Or your OpenShift cluster if using k8s module directly
+  connection: local # Important for running kubectl/oc commands from the EDA controller
+
+  tasks:
+    - name: Log the received alert details
+      ansible.builtin.debug:
+        msg: |
+          Received Firing Alert: {{ alert_name }}
+          Severity: {{ alert_severity }}
+          Namespace: {{ alert_namespace }}
+          Description: {{ alert_description }}
+          Instructions: {{ alert_instructions }}
+          Full Labels: {{ all_labels | to_nice_json }}
+          Full Annotations: {{ all_annotations | to_nice_json }}
+
+    - name: Determine remediation based on alert details (example)
+      block:
+        - name: Attempt automated remediation for specific rule
+          # This is a placeholder. You'd replace this with actual tasks
+          # that interact with OpenShift to remediate the issue.
+          # For example, using the kubernetes.core.k8s module to apply a ComplianceRemediation CR.
+          # Ensure your EDA execution environment has the kubernetes.core collection installed.
+          kubernetes.core.k8s:
+            api_version: compliance.openshift.io/v1alpha1
+            kind: ComplianceRemediation
+            name: "auto-remediation-for-{{ all_labels['compliance_check_name'] | lower | replace('_', '-') }}" # Assuming a label for check name
+            namespace: openshift-compliance
+            state: present
+            definition:
+              spec:
+                apply: true
+                # You might need to dynamically build the remediation spec based on the alert
+                # For example, if the alert tells you which specific object is non-compliant.
+          when:
+            - alert_name == "ComplianceCheckResultFailed"
+            - all_labels['compliance_check_name'] is defined # A label like this would be very useful
+            - 'true' # Add more specific conditions here to decide if auto-remediation is possible/desired
+
+        - name: Send notification about remediation attempt
+          ansible.builtin.debug:
+            msg: "Attempted automated remediation for {{ alert_name }} (Severity: {{ alert_severity }})."
+          # You'd replace this with a real notification (e.g., via Slack, Teams, email)
+          # using community.general.slack or other notification modules.
+
+      rescue:
+        - name: Log remediation failure
+          ansible.builtin.debug:
+            msg: "Failed to apply automated remediation for {{ alert_name }}. Manual intervention required. Details: {{ ansible_failed_result }}"
+            # Send critical notification here for manual intervention
