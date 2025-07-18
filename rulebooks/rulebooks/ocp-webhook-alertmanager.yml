@@ -1,0 +1,51 @@
+---
+- name: Process OpenShift Alertmanager Webhook Events
+  hosts: localhost # EDA typically runs locally on the EDA controller
+  sources:
+    - name: openshift_alertmanager_webhook
+      # Use the 'webhook' plugin from the ansible.eda collection
+      ansible.eda.webhook:
+        host: 0.0.0.0 # Listen on all available interfaces
+        port: 8080   # The port your AlertmanagerConfig is forwarding to
+
+  rules:
+    - name: Handle Firing ComplianceCheckResultFailed Alert
+      # Condition to trigger when a new alert is firing and is related to compliance checks
+      condition:
+        # The Alertmanager payload is in 'event.payload'
+        - event.payload.status == "firing"
+        - "ComplianceCheckResultFailed" in event.payload.alerts | json_query('[].labels.alertname')
+        # You might want to be more specific, e.g., only for a certain severity
+        # - "critical" in event.payload.alerts | json_query('[].labels.severity')
+        # Or a specific compliance profile
+        # - "ocp4-cis" in event.payload.alerts | json_query('[].labels.compliance_profile')
+      action:
+        run_playbook:
+          name: handle_compliance_failure.yml
+          # Pass relevant data from the event payload as facts to the playbook
+          set_facts:
+            # Extract details from the *first* alert in the payload for simplicity.
+            # You might need a loop in the playbook if multiple distinct alerts are in one payload.
+            alert_name: "{{ event.payload.alerts[0].labels.alertname }}"
+            alert_status: "{{ event.payload.alerts[0].status }}"
+            alert_severity: "{{ event.payload.alerts[0].labels.severity | default('unknown') }}"
+            alert_namespace: "{{ event.payload.alerts[0].labels.namespace | default('unknown') }}"
+            alert_description: "{{ event.payload.alerts[0].annotations.description | default('No description.') }}"
+            alert_instructions: "{{ event.payload.alerts[0].annotations.instructions | default('No instructions.') }}"
+            # Capture all labels and annotations for debugging or more complex logic
+            all_labels: "{{ event.payload.alerts[0].labels }}"
+            all_annotations: "{{ event.payload.alerts[0].annotations }}"
+
+    - name: Handle Resolved ComplianceCheckResultFailed Alert
+      # Condition to trigger when an alert is resolved
+      condition:
+        - event.payload.status == "resolved"
+        - "ComplianceCheckResultFailed" in event.payload.alerts | json_query('[].labels.alertname')
+      action:
+        run_playbook:
+          name: handle_compliance_resolved.yml
+          set_facts:
+            alert_name: "{{ event.payload.alerts[0].labels.alertname }}"
+            alert_status: "{{ event.payload.alerts[0].status }}"
+            alert_namespace: "{{ event.payload.alerts[0].labels.namespace | default('unknown') }}"
+            alert_description: "{{ event.payload.alerts[0].annotations.description | default('No description.') }}"
