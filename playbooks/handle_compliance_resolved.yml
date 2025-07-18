@@ -1,0 +1,17 @@
+---
+- name: Handle OpenShift Compliance Alert Resolution
+  hosts: localhost
+  connection: local
+
+  tasks:
+    - name: Log the resolved alert details
+      ansible.builtin.debug:
+        msg: |
+          Received Resolved Alert: {{ alert_name }}
+          Namespace: {{ alert_namespace }}
+          Description: {{ alert_description }}
+
+    - name: Send notification about resolved compliance issue
+      ansible.builtin.debug:
+        msg: "Compliance issue '{{ alert_name }}' in namespace '{{ alert_namespace }}' has been resolved."
+      # Replace with a real notification module
