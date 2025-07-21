@@ -1,14 +1,26 @@
 ---
-- name: Monitor for new PVCs and create a snapshots
+- name: Listen for events on alertmanager
   hosts: all
+
   sources:
-    - sabre1041.eda.k8s:
-        api_version: v1
-        kind: PersistentVolumeClaim
+    - ansible.eda.alertmanager:
+        host: 0.0.0.0
+        port: 8080
+        data_host_path: ""
+    - ansible.eda.webhook:
+        host: 0.0.0.0
+        port: 8080
+
   rules:
-    - name: Create Snapshot
-      condition: event.type == "ADDED"
+    - name: alertmanager
+      condition: event.alert is defined
       action:
-        run_job_template:
-          name: "OpenShift PVC Snapshot"
-          organization: Default
+        run_playbook:
+          name: do-something.yml
+          var_root: payload
+    - name: webhook
+      condition: event.payload.message != ""
+      action:
+        run_playbook:
+          name: do-something.yml
+          var_root: payload
