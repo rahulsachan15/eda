@@ -17,10 +17,12 @@
       action:
         run_playbook:
           name: do-something.yml
+          inventory: inventory.yml
 #          var_root: payload
     - name: webhook
       condition: event.payload.message != ""
       action:
         run_playbook:
           name: do-something.yml
+          inventory: inventory.yml
 #          var_root: payload
