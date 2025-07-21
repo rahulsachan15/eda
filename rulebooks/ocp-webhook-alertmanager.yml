@@ -1,6 +1,6 @@
 ---
 - name: Listen for events on alertmanager
-  hosts: all
+  hosts: localhost
 
   sources:
     - ansible.eda.alertmanager:
