@@ -19,11 +19,11 @@
           name: do-something.yml
 #          inventory: inventory.yml
           var_root: payload
-          organization: Default
-          job_args:
-            extra_vars: {}
-            env:
-              CONTROLLER_VERIFY_SSL: "false"
+#          organization: Default
+#          job_args:
+#            extra_vars: {}
+#            env:
+#              CONTROLLER_VERIFY_SSL: "false"
     - name: webhook
       condition: event.payload.message != ""
       action:
@@ -31,8 +31,8 @@
           name: do-something.yml
 #          inventory: inventory.yml
           var_root: payload
-          organization: Default
-          job_args:
-            extra_vars: {}
-            env:
-              CONTROLLER_VERIFY_SSL: "false"
+#          organization: Default
+#          job_args:
+#            extra_vars: {}
+#            env:
+#              CONTROLLER_VERIFY_SSL: "false"
